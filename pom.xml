@@ -3,11 +3,15 @@
   
   <groupId>com.pawlowiczf</groupId>
   <artifactId>grpc-stubs</artifactId>
-  <version>${revision}</version>
+  <version>1.0.0</version> <!-- Używam stałej wersji dla pewności -->
   
   <properties>
-    <revision>1.0.0</revision>
     <grpc.version>1.58.0</grpc.version>
+    <protobuf.version>3.23.4</protobuf.version>
+    <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
+    <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
   </properties>
 
   <dependencies>
@@ -16,7 +20,52 @@
       <artifactId>grpc-stub</artifactId>
       <version>${grpc.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf</artifactId>
+      <version>${grpc.version}</version>
+    </dependency>
   </dependencies>
+
+  <build>
+    <extensions>
+      <!-- Plugin do wykrywania systemu operacyjnego -->
+      <extension>
+        <groupId>kr.motd.maven</groupId>
+        <artifactId>os-maven-plugin</artifactId>
+        <version>${os-maven-plugin.version}</version>
+      </extension>
+    </extensions>
+    
+    <plugins>
+      <!-- Plugin generujący kod z .proto -->
+      <plugin>
+        <groupId>org.xolstice.maven.plugins</groupId>
+        <artifactId>protobuf-maven-plugin</artifactId>
+        <version>${protobuf-maven-plugin.version}</version>
+        <configuration>
+          <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
+          <pluginId>grpc-java</pluginId>
+          <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>compile-custom</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      
+      <!-- Plugin do publikacji -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>3.1.1</version>
+      </plugin>
+    </plugins>
+  </build>
 
   <distributionManagement>
     <repository>
@@ -25,14 +74,4 @@
       <url>https://maven.pkg.github.com/pawlowiczf/proto-storage</url>
     </repository>
   </distributionManagement>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <version>3.1.1</version>
-      </plugin>
-    </plugins>
-  </build>
 </project>
