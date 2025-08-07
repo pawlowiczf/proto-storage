@@ -1,0 +1,39 @@
+name: Proto CI/CD
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install buf
+      run: |
+        curl -sSL "https://github.com/bufbuild/buf/releases/download/v1.29.0/buf-$(uname -s)-$(uname -m)" -o /usr/local/bin/buf
+        chmod +x /usr/local/bin/buf
+
+    - name: Validate protos
+      run: buf lint
+
+    - name: Generate Java stubs
+      run: |
+        buf generate --template buf.gen.java.yaml
+
+    - name: Build Java package
+      run: mvn -B clean package
+
+    - name: Publish Java package to GitHub Packages
+      run: mvn -B deploy
+      env:
+        GITHUB_TOKEN: ${{ secrets.PROTO_REGISTRY_CI }}
